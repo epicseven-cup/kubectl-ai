@@ -36,6 +36,9 @@ type AnthropicAPIClient struct {
 	client anthropic.Client
 }
 
+type AnthropicAIChat struct {
+}
+
 func NewAnthropicAPIClient(ctx context.Context, opts AnthropicAPIOptions) (Client, error) {
 	if opts.AWSBedrock {
 		client := anthropic.NewClient(
@@ -76,9 +79,8 @@ func (c *AnthropicAPIClient) GenerateCompletion(ctx context.Context, req *Comple
 	panic("implement me")
 }
 
-func (c *AnthropicAPIClient) SetResponseSchema(schema *Schema) error {
-	//TODO implement me
-	panic("implement me")
+func (c *AnthropicAPIClient) SetResponseSchema(responseSchema *Schema) error {
+	return nil
 }
 
 func (c *AnthropicAPIClient) ListModels(ctx context.Context) ([]string, error) {
