@@ -39,7 +39,8 @@ type AnthropicAPIClient struct {
 func NewAnthropicAPIClient(ctx context.Context, opts AnthropicAPIOptions) (Client, error) {
 	if opts.AWSBedrock {
 		client := anthropic.NewClient(
-			bedrock.WithLoadDefaultConfig(ctx), // bedrock supports aws.Config as well with `bedrock.WithConfig`
+			// bedrock supports aws.Config as well with `bedrock.WithConfig`
+			bedrock.WithLoadDefaultConfig(ctx),
 		)
 		return &AnthropicAPIClient{client: client}, nil
 	}
@@ -59,30 +60,47 @@ func NewAnthropicAPIClient(ctx context.Context, opts AnthropicAPIOptions) (Clien
 
 var _ Client = &AnthropicAPIClient{}
 
-func (c AnthropicAPIClient) Close() error {
+func (c *AnthropicAPIClient) Close() error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (c AnthropicAPIClient) StartChat(systemPrompt, model string) Chat {
+func (c *AnthropicAPIClient) StartChat(systemPrompt, model string) Chat {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (c AnthropicAPIClient) GenerateCompletion(ctx context.Context, req *CompletionRequest) (CompletionResponse, error) {
+func (c *AnthropicAPIClient) GenerateCompletion(ctx context.Context, req *CompletionRequest) (CompletionResponse, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (c AnthropicAPIClient) SetResponseSchema(schema *Schema) error {
+func (c *AnthropicAPIClient) SetResponseSchema(schema *Schema) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (c AnthropicAPIClient) ListModels(ctx context.Context) ([]string, error) {
-	models, err := c.ListModels(ctx)
+func (c *AnthropicAPIClient) ListModels(ctx context.Context) ([]string, error) {
+	// AutoPaging can also be used here for easier iterating, but I want to handel the error respond here
+	// AutoPaging Doc: https://pkg.go.dev/github.com/anthropics/anthropic-sdk-go@v0.2.0-beta.3#readme-pagination
+	modelInfoPage, err := c.client.Models.List(ctx, anthropic.ModelListParams{
+		// Default values for limit is 20 max range is 1 - 1000
+		// https://github.com/anthropics/anthropic-sdk-go/blob/v0.2.0-beta.3/model.go#L116
+		Limit: anthropic.Int(1000),
+	})
 	if err != nil {
 		return nil, err
+	}
+	var models []string
+	for modelInfoPage != nil {
+		for _, m := range modelInfoPage.Data {
+			models = append(models, m.DisplayName)
+		}
+		// GetNextPage returns nil if there are no more pages left, will not error
+		modelInfoPage, err = modelInfoPage.GetNextPage()
+		if err != nil {
+			return nil, err
+		}
 	}
 	return models, nil
 }
