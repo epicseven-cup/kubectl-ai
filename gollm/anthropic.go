@@ -60,12 +60,13 @@ func NewAnthropicAPIClient(ctx context.Context, opts AnthropicAPIOptions) (Clien
 
 var _ Client = &AnthropicAPIClient{}
 
+// Close free resource
 func (c *AnthropicAPIClient) Close() error {
-	//TODO implement me
-	panic("implement me")
+	// There are no actual way to close client in `anthropic-go-sdk`
+	return nil
 }
 
-func (c *AnthropicAPIClient) StartChat(systemPrompt, model string) Chat {
+func (c *AnthropicAPIClient) StartChat(systemPrompt string, model string) Chat {
 	//TODO implement me
 	panic("implement me")
 }
