@@ -59,29 +59,30 @@ func NewAnthropicAPIClient(ctx context.Context, opts AnthropicAPIOptions) (Clien
 
 var _ Client = &AnthropicAPIClient{}
 
-func (a AnthropicAPIClient) Close() error {
+func (c AnthropicAPIClient) Close() error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (a AnthropicAPIClient) StartChat(systemPrompt, model string) Chat {
+func (c AnthropicAPIClient) StartChat(systemPrompt, model string) Chat {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (a AnthropicAPIClient) GenerateCompletion(ctx context.Context, req *CompletionRequest) (CompletionResponse, error) {
+func (c AnthropicAPIClient) GenerateCompletion(ctx context.Context, req *CompletionRequest) (CompletionResponse, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (a AnthropicAPIClient) SetResponseSchema(schema *Schema) error {
+func (c AnthropicAPIClient) SetResponseSchema(schema *Schema) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (a AnthropicAPIClient) ListModels(ctx context.Context) ([]string, error) {
-	//TODO implement me
-	panic("implement me")
+func (c AnthropicAPIClient) ListModels(ctx context.Context) ([]string, error) {
+	models, err := c.ListModels(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return models, nil
 }
-
-var _ Client = &AnthropicAPIClient{}
