@@ -37,6 +37,28 @@ type AnthropicAPIClient struct {
 }
 
 type AnthropicAIChat struct {
+	client anthropic.Client
+	model  string
+}
+
+func (c AnthropicAIChat) Send(ctx context.Context, contents ...any) (ChatResponse, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c AnthropicAIChat) SendStreaming(ctx context.Context, contents ...any) (ChatResponseIterator, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c AnthropicAIChat) SetFunctionDefinitions(functionDefinitions []*FunctionDefinition) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (c AnthropicAIChat) IsRetryableError(err error) bool {
+	//TODO implement me
+	panic("implement me")
 }
 
 func NewAnthropicAPIClient(ctx context.Context, opts AnthropicAPIOptions) (Client, error) {
@@ -70,8 +92,7 @@ func (c *AnthropicAPIClient) Close() error {
 }
 
 func (c *AnthropicAPIClient) StartChat(systemPrompt string, model string) Chat {
-	//TODO implement me
-	panic("implement me")
+	return AnthropicAIChat{}
 }
 
 func (c *AnthropicAPIClient) GenerateCompletion(ctx context.Context, req *CompletionRequest) (CompletionResponse, error) {
