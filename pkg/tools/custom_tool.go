@@ -71,6 +71,15 @@ func (t *CustomTool) FunctionDefinition() *gollm.FunctionDefinition {
 					Type:        gollm.TypeString,
 					Description: t.config.CommandDesc,
 				},
+				"modifies_resource": {
+					Type: gollm.TypeString,
+					Description: `Whether the command modifies a kubernetes resource.
+Possible values:
+- "yes" if the command modifies a resource
+- "no" if the command does not modify a resource
+- "unknown" if the command's effect on the resource is unknown
+`,
+				},
 			},
 		},
 	}
@@ -85,6 +94,9 @@ func (t *CustomTool) Run(ctx context.Context, args map[string]any) (any, error) 
 	cmdArgs := []string{}
 	if len(command) > 1 {
 		cmdArgs = command[1:]
+	}
+	if cmdVal, ok := args["command"]; ok {
+		cmdArgs = append(cmdArgs, cmdVal.(string))
 	}
 	workDir := ctx.Value(WorkDirKey).(string)
 
