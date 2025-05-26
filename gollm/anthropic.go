@@ -37,26 +37,54 @@ type AnthropicAPIClient struct {
 }
 
 type AnthropicAIChat struct {
-	client anthropic.Client
-	model  string
+	client  anthropic.Client
+	model   string
+	history []string
+	system  string
 }
 
-func (c AnthropicAIChat) Send(ctx context.Context, contents ...any) (ChatResponse, error) {
+func (c *AnthropicAIChat) Send(ctx context.Context, contents ...any) (ChatResponse, error) {
+	msgNewParam := anthropic.MessageNewParams{
+		MaxTokens:     2048,
+		Messages:      nil,
+		Model:         c.model,
+		Temperature:   anthropic.Float(1.0),
+		Metadata:      anthropic.MetadataParam{},
+		StopSequences: nil,
+		System: []anthropic.TextBlockParam{
+			anthropic.TextBlockParam{
+				Text:         c.system,
+				Citations:    nil,
+				CacheControl: anthropic.CacheControlEphemeralParam{},
+				Type:         "text",
+			},
+		},
+		Thinking:   anthropic.ThinkingConfigParamUnion{},
+		ToolChoice: anthropic.ToolChoiceUnionParam{},
+		Tools:      nil,
+	}
+	message, err := c.client.Messages.New(ctx, msgNewParam)
+	if err != nil {
+		return nil, err
+	}
+
+}
+
+func (c *AnthropicAIChat) partsToClaude(content ...any) {
+
+}
+
+func (c *AnthropicAIChat) SendStreaming(ctx context.Context, contents ...any) (ChatResponseIterator, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (c AnthropicAIChat) SendStreaming(ctx context.Context, contents ...any) (ChatResponseIterator, error) {
+func (c *AnthropicAIChat) SetFunctionDefinitions(functionDefinitions []*FunctionDefinition) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (c AnthropicAIChat) SetFunctionDefinitions(functionDefinitions []*FunctionDefinition) error {
-	//TODO implement me
-	panic("implement me")
-}
-
-func (c AnthropicAIChat) IsRetryableError(err error) bool {
+func (c *AnthropicAIChat) IsRetryableError(err error) bool {
 	//TODO implement me
 	panic("implement me")
 }
@@ -92,7 +120,12 @@ func (c *AnthropicAPIClient) Close() error {
 }
 
 func (c *AnthropicAPIClient) StartChat(systemPrompt string, model string) Chat {
-	return AnthropicAIChat{}
+	return AnthropicAIChat{
+		client:  c.client,
+		model:   model,
+		history: []string{},
+		system:  systemPrompt,
+	}
 }
 
 func (c *AnthropicAPIClient) GenerateCompletion(ctx context.Context, req *CompletionRequest) (CompletionResponse, error) {
