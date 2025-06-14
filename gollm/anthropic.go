@@ -68,14 +68,12 @@ func (c *AnthropicAIChat) Send(ctx context.Context, contents ...any) (ChatRespon
 		ToolChoice: anthropic.ToolChoiceUnionParam{},
 		Tools:      nil,
 	}
-	message, err := c.client.Messages.New(ctx, msgNewParam)
-	if err != nil {
-		return nil, err
-	}
+	message := c.client.Messages.NewStreaming(ctx, msgNewParam)
+
 	for _, msgContent := range message.Content {
 		c.history = append(c.history, msgContent.AsResponseTextBlock())
 	}
-
+	return ChatResponse()
 }
 
 func (c *AnthropicAIChat) partsToClaude(content ...any) {
