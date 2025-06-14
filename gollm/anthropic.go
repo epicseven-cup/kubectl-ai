@@ -39,8 +39,13 @@ type AnthropicAPIClient struct {
 type AnthropicAIChat struct {
 	client  anthropic.Client
 	model   string
-	history []string
+	history []anthropic.TextBlock
 	system  string
+}
+
+type AnthropicContent struct {
+	Content string
+	Role    string
 }
 
 func (c *AnthropicAIChat) Send(ctx context.Context, contents ...any) (ChatResponse, error) {
@@ -66,6 +71,9 @@ func (c *AnthropicAIChat) Send(ctx context.Context, contents ...any) (ChatRespon
 	message, err := c.client.Messages.New(ctx, msgNewParam)
 	if err != nil {
 		return nil, err
+	}
+	for _, msgContent := range message.Content {
+		c.history = append(c.history, msgContent.AsResponseTextBlock())
 	}
 
 }
