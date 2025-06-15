@@ -6,6 +6,7 @@ import (
 	"github.com/anthropics/anthropic-sdk-go"
 	"github.com/anthropics/anthropic-sdk-go/bedrock"
 	"github.com/anthropics/anthropic-sdk-go/option"
+	"google.golang.org/genai"
 	"k8s.io/klog/v2"
 	"os"
 )
@@ -48,7 +49,26 @@ type AnthropicContent struct {
 	Role    string
 }
 
+type AnthropicChatResponse struct {
+	anthropicResponse *anthropic.TextBlock
+}
+
+func (a AnthropicChatResponse) UsageMetadata() any {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (a AnthropicChatResponse) Candidates() []Candidate {
+	//TODO implement me
+	panic("implement me")
+}
+
+var _ ChatResponse = &AnthropicChatResponse{}
+
 func (c *AnthropicAIChat) Send(ctx context.Context, contents ...any) (ChatResponse, error) {
+	log := klog.FromContext(ctx)
+	log.V(1).Info("sending LLM request", "user", contents)
+
 	msgNewParam := anthropic.MessageNewParams{
 		MaxTokens:     2048,
 		Messages:      nil,
@@ -68,15 +88,29 @@ func (c *AnthropicAIChat) Send(ctx context.Context, contents ...any) (ChatRespon
 		ToolChoice: anthropic.ToolChoiceUnionParam{},
 		Tools:      nil,
 	}
-	message := c.client.Messages.NewStreaming(ctx, msgNewParam)
-
-	for _, msgContent := range message.Content {
-		c.history = append(c.history, msgContent.AsResponseTextBlock())
+	response, error := c.client.Messages.New(ctx, msgNewParam)
+	if error != nil {
+		return nil, error
 	}
-	return ChatResponse()
+
+	return ChatResponse(response), nil
 }
 
-func (c *AnthropicAIChat) partsToClaude(content ...any) {
+func (c *AnthropicAIChat) partsToClaude(content ...any) ([]*anthropic.TextBlock, error) {
+	var parts []*anthropic.TextBlock
+	for _, content := range content {
+		switch v := content.(type) {
+		case string:
+			parts = append(parts, &anthropic.TextBlock{
+				Text: v,
+			})
+		case FunctionCallResult:
+			return nil, nil
+		default:
+			return nil, fmt.Errorf("unexpected type of content: %T", content)
+		}
+
+	}
 
 }
 
