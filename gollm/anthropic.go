@@ -40,7 +40,7 @@ type AnthropicAPIClient struct {
 type AnthropicAIChat struct {
 	client  anthropic.Client
 	model   string
-	history []anthropic.TextBlock
+	history []anthropic.MessageParam
 	system  string
 }
 
@@ -50,17 +50,15 @@ type AnthropicContent struct {
 }
 
 type AnthropicChatResponse struct {
-	anthropicResponse *anthropic.TextBlock
+	anthropicResponse *anthropic.Message
 }
 
-func (a AnthropicChatResponse) UsageMetadata() any {
-	//TODO implement me
-	panic("implement me")
+func (r *AnthropicChatResponse) UsageMetadata() any {
+	return nil
 }
 
-func (a AnthropicChatResponse) Candidates() []Candidate {
-	//TODO implement me
-	panic("implement me")
+func (r *AnthropicChatResponse) Candidates() []Candidate {
+	return nil
 }
 
 var _ ChatResponse = &AnthropicChatResponse{}
@@ -69,9 +67,12 @@ func (c *AnthropicAIChat) Send(ctx context.Context, contents ...any) (ChatRespon
 	log := klog.FromContext(ctx)
 	log.V(1).Info("sending LLM request", "user", contents)
 
+	c.history = append(c.history, anthropic.MessageParam{
+		anthropic.NewUserMessage(c.partsToClaude(contents)),
+	})
 	msgNewParam := anthropic.MessageNewParams{
 		MaxTokens:     2048,
-		Messages:      nil,
+		Messages:      c.history,
 		Model:         c.model,
 		Temperature:   anthropic.Float(1.0),
 		Metadata:      anthropic.MetadataParam{},
@@ -88,15 +89,17 @@ func (c *AnthropicAIChat) Send(ctx context.Context, contents ...any) (ChatRespon
 		ToolChoice: anthropic.ToolChoiceUnionParam{},
 		Tools:      nil,
 	}
-	response, error := c.client.Messages.New(ctx, msgNewParam)
-	if error != nil {
-		return nil, error
+	response, err := c.client.Messages.New(ctx, msgNewParam)
+	if err != nil {
+		return nil, err
 	}
 
-	return ChatResponse(response), nil
+	return &AnthropicChatResponse{
+		anthropicResponse: response,
+	}, nil
 }
 
-func (c *AnthropicAIChat) partsToClaude(content ...any) ([]*anthropic.TextBlock, error) {
+func (c *AnthropicAIChat) partsToClaude(content ...any) (anthropic.ContentBlockParamUnion, error) {
 	var parts []*anthropic.TextBlock
 	for _, content := range content {
 		switch v := content.(type) {
