@@ -67,9 +67,17 @@ func (c *AnthropicAIChat) Send(ctx context.Context, contents ...any) (ChatRespon
 	log := klog.FromContext(ctx)
 	log.V(1).Info("sending LLM request", "user", contents)
 
-	c.history = append(c.history, anthropic.MessageParam{
-		anthropic.NewUserMessage(c.partsToClaude(contents)),
-	})
+	claude, err := c.partsToClaude(contents)
+	if err != nil {
+		return nil, err
+	}
+
+	msg := anthropic.NewUserMessage(claude)
+
+	// Appending the current message into the history
+	c.history = append(c.history, msg)
+
+	// Using the history + new message into the conversation
 	msgNewParam := anthropic.MessageNewParams{
 		MaxTokens:     2048,
 		Messages:      c.history,
@@ -108,9 +116,9 @@ func (c *AnthropicAIChat) partsToClaude(content ...any) (anthropic.ContentBlockP
 				Text: v,
 			})
 		case FunctionCallResult:
-			return nil, nil
+			return anthropic.NewTextBlock(""), nil
 		default:
-			return nil, fmt.Errorf("unexpected type of content: %T", content)
+			return anthropic.NewTextBlock(""), fmt.Errorf("unexpected type of content: %T", content)
 		}
 
 	}
