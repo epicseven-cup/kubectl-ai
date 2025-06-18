@@ -6,7 +6,6 @@ import (
 	"github.com/anthropics/anthropic-sdk-go"
 	"github.com/anthropics/anthropic-sdk-go/bedrock"
 	"github.com/anthropics/anthropic-sdk-go/option"
-	"google.golang.org/genai"
 	"k8s.io/klog/v2"
 	"os"
 )
@@ -72,9 +71,8 @@ func (c *AnthropicAIChat) Send(ctx context.Context, contents ...any) (ChatRespon
 		return nil, err
 	}
 
-	msg := anthropic.NewUserMessage(claude)
+	msg := anthropic.NewUserMessage(claude...)
 
-	// Appending the current message into the history
 	c.history = append(c.history, msg)
 
 	// Using the history + new message into the conversation
@@ -107,22 +105,21 @@ func (c *AnthropicAIChat) Send(ctx context.Context, contents ...any) (ChatRespon
 	}, nil
 }
 
-func (c *AnthropicAIChat) partsToClaude(content ...any) (anthropic.ContentBlockParamUnion, error) {
-	var parts []*anthropic.TextBlock
+func (c *AnthropicAIChat) partsToClaude(content ...any) ([]anthropic.ContentBlockParamUnion, error) {
+	var parts []anthropic.ContentBlockParamUnion
 	for _, content := range content {
 		switch v := content.(type) {
 		case string:
-			parts = append(parts, &anthropic.TextBlock{
-				Text: v,
-			})
+			block := anthropic.NewTextBlock(v)
+			parts = append(parts, block)
 		case FunctionCallResult:
-			return anthropic.NewTextBlock(""), nil
+			return parts, nil
 		default:
-			return anthropic.NewTextBlock(""), fmt.Errorf("unexpected type of content: %T", content)
+			return parts, fmt.Errorf("unexpected type of content: %T", content)
 		}
 
 	}
-
+	return parts, nil
 }
 
 func (c *AnthropicAIChat) SendStreaming(ctx context.Context, contents ...any) (ChatResponseIterator, error) {
@@ -171,10 +168,10 @@ func (c *AnthropicAPIClient) Close() error {
 }
 
 func (c *AnthropicAPIClient) StartChat(systemPrompt string, model string) Chat {
-	return AnthropicAIChat{
+	return &AnthropicAIChat{
 		client:  c.client,
 		model:   model,
-		history: []string{},
+		history: []anthropic.MessageParam{},
 		system:  systemPrompt,
 	}
 }
