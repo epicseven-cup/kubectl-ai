@@ -34,6 +34,8 @@ type AnthropicAPIOptions struct {
 // AnthropicAPIClient is a client for Anthropic Bedrock API
 type AnthropicAPIClient struct {
 	client anthropic.Client
+	// This could be omitted, really depends on the anthrop
+	responseSchema *Schema
 }
 
 type AnthropicAIChat struct {
@@ -125,6 +127,17 @@ func (c *AnthropicAIChat) partsToClaude(content ...any) ([]anthropic.ContentBloc
 func (c *AnthropicAIChat) SendStreaming(ctx context.Context, contents ...any) (ChatResponseIterator, error) {
 	//TODO implement me
 	panic("implement me")
+	msg, err := c.partsToClaude(contents...)
+	if err != nil {
+		return nil, err
+	}
+	c.client.Messages.NewStreaming(ctx, anthropic.MessageNewParams{
+		Model:     c.model,
+		MaxTokens: 2048,
+		Messages: []anthropic.MessageParam{{
+			anthropic.NewUserMessage(msg),
+		}},
+	})
 }
 
 func (c *AnthropicAIChat) SetFunctionDefinitions(functionDefinitions []*FunctionDefinition) error {
@@ -182,6 +195,15 @@ func (c *AnthropicAPIClient) GenerateCompletion(ctx context.Context, req *Comple
 }
 
 func (c *AnthropicAPIClient) SetResponseSchema(responseSchema *Schema) error {
+	if responseSchema == nil {
+		c.responseSchema = responseSchema
+		return nil
+	}
+
+	return nil
+}
+
+func toAntropicSchema(schema *Schema) *anthropic.ToolInputSchemaParam {
 	return nil
 }
 
